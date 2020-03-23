@@ -325,8 +325,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'public/dist')
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'public/media')
 
-DISQUS_ENABLED = get_env_bool('DISQUS_ENABLED')
-
 
 sentry_sdk.init(
     dsn=get_env('SENTRY_DSN'),
