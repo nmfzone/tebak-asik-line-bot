@@ -604,10 +604,10 @@ def get_next_question(event, player_id, retry=False):
         questions_has_creator = json.loads(cache.get(cache_prefix + '.questions_has_creator', '[]'))
 
         if len(questions_has_creator) >= max_question_has_creator:
-            question = qs.filter(creator=None).order_by('?').first()
-
-        questions_has_creator.append(question.id)
-        cache.set(cache_prefix + '.questions_has_creator', json.dumps(questions_has_creator), None)
+            question = qs.filter(for_player=None).order_by('?').first()
+        else:
+            questions_has_creator.append(question.id)
+            cache.set(cache_prefix + '.questions_has_creator', json.dumps(questions_has_creator), None)
 
     if not question:
         if retry:
