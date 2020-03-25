@@ -294,7 +294,7 @@ def handle_message(event):
             line_bot_api.reply_message(
                 event.reply_token, [
                     TextSendMessage('Permainan diulang.'),
-                    get_next_question(event, player['id'])
+                    get_next_question(event, player['id'], True)
                 ]
             )
         elif text == '/reset-paksa':
@@ -587,7 +587,7 @@ def handle_join(event):
     )
 
 
-def get_next_question(event, player_id):
+def get_next_question(event, player_id, retry=False):
     max_question = 10  # change next time
     max_question_has_creator = 5
     time_per_question = 60  # seconds
@@ -610,7 +610,9 @@ def get_next_question(event, player_id):
         cache.set(cache_prefix + '.questions_has_creator', json.dumps(questions_has_creator), None)
 
     if not question:
-        question = Question.objects.order_by('?').first()
+        if retry:
+            question = Question.objects.order_by('?').first()
+
         if not question:
             return
 
