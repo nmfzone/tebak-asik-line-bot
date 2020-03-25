@@ -2,7 +2,6 @@ import os
 import sentry_sdk
 import pydash as _
 from core import get_env, get_env_bool
-from celery.schedules import crontab
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 
