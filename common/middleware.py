@@ -70,6 +70,9 @@ class HttpRequestPatchMiddleware:
             request.INPUT = data
 
         request._files = transform_uploaded_files(request.FILES)
+        # idk it's bad or not (https://stackoverflow.com/q/19581110/4484016)
+        # at least, it works :)
+        request._read_started = False
 
         return self.get_response(request)
 
@@ -84,7 +87,7 @@ class ServiceProviderMiddleware:
 
 
 def show_toolbar(request):
-    if request.match('embed/*') or request.META.get("REMOTE_ADDR", None) not in settings.INTERNAL_IPS:
+    if request.match('embed/*'):
         return False
 
     return settings.DEBUG and not settings.DISABLE_DEBUG_TOOLBAR
