@@ -320,7 +320,7 @@ def handle_message(event):
                     '- Panjang jawaban minimal 3 dan maksimal 25 karakter',
                     '- Jumlah jawaban minimal 1 dan maksimal 10',
                     '- Pertanyaan tidak boleh mengandung karakter %s' % "';'",
-                    '- Jawaban tidak boleh mengandung karakter %s, %s, %s, %s' % ("';'", "','", "'('", "')'")
+                    '- Jawaban hanya boleh mengandung huruf dan spasi'
                 ]
 
                 if text == '/tambah-pertanyaan':
@@ -353,82 +353,92 @@ def handle_message(event):
 
                     format_correct = True
 
-                    if len(data) == 3:
-                        try:
-                            game_id = data[0].strip()
-                            question = data[1].strip()
-                            answers = data[2].split(',')
+                    try:
+                        game_id = data[0].strip()
+                        question = data[1].strip()
+                        answers = list(filter(None, data[2].split(',')))
 
-                            total = 0
-                            for index, answer in enumerate(answers):
-                                answer = answer.strip()
-                                result = re.search(r'.* \(([^)]+)\)$', answer)
-                                ans = pydash.replace_end(answer, ' (%s)' % result[1], '')
-                                score = int(result[1])
+                        total = 0
+                        for index, answer in enumerate(answers):
+                            if index >= 10:
+                                # break fast if answers more than 10
+                                break
 
-                                if len(answer) < 3 or len(answer) > 25:
-                                    errors.append(2)
-                                    format_correct = False
+                            answer = answer.strip()
+                            result = re.search(r'.* \(([^)]+)\)$', answer)
+                            ans = pydash.replace_end(answer, ' (%s)' % result[1], '')
 
-                                answers[index] = [ans, score]
-                                total += score
-
-                            if total != 100:
-                                errors.append(0)
+                            if len(answer) < 3 or len(answer) > 25:
+                                errors.append(2)
                                 format_correct = False
 
-                            if len(answers) > 10:
-                                errors.append(3)
+                            if not re.search(r'^[a-zA-Z ]*$', ans):
+                                errors.append(5)
                                 format_correct = False
 
-                            if len(question) > 100 or len(question) < 20:
-                                errors.append(1)
-                                format_correct = False
-                        except:
-                            errors.append(3)
-                            errors.append(4)
-                            errors.append(5)
+                            score = int(result[1])
+
+                            answers[index] = [ans, score]
+                            total += score
+
+                        if total != 100:
+                            errors.append(0)
                             format_correct = False
 
-                        _player = Player.objects.filter(key=game_id).first()
+                        if len(answers) > 10:
+                            errors.append(3)
+                            format_correct = False
 
-                        if not _player:
-                            line_bot_api.reply_message(
-                                event.reply_token,
-                                TextSendMessage('ID Permainan tidak ditemukan.')
-                            )
-                        elif format_correct:
-                            Question.objects.create(
-                                value=question,
-                                answers=answers,
-                                creator_id=player['id'],
-                                for_player=_player
-                            )
+                        if len(question) > 100 or len(question) < 20:
+                            errors.append(1)
+                            format_correct = False
+                    except:
+                        format_correct = False
 
-                            line_bot_api.reply_message(
-                                event.reply_token,
-                                TextSendMessage(
-                                    'Anda berhasil menambahkan pertanyaan ke dalam ' +
-                                    'Permainan dengan ID %s' % game_id
-                                )
+                    if len(data) > 3:
+                        errors.append(4)
+                        format_correct = False
+
+                    if len(answers) == 0:
+                        errors.append(3)
+                        format_correct = False
+
+                    _player = Player.objects.filter(key=game_id).first()
+
+                    if not _player:
+                        line_bot_api.reply_message(
+                            event.reply_token,
+                            TextSendMessage('ID Permainan tidak ditemukan.')
+                        )
+                    elif format_correct:
+                        Question.objects.create(
+                            value=question,
+                            answers=answers,
+                            creator_id=player['id'],
+                            for_player=_player
+                        )
+
+                        line_bot_api.reply_message(
+                            event.reply_token,
+                            TextSendMessage(
+                                'Anda berhasil menambahkan pertanyaan ke dalam ' +
+                                'Permainan dengan ID %s' % game_id
                             )
-                        else:
-                            output = 'Format tidak sesuai. Pastikan Anda menuliskan sesuai format.\n\n'\
-                                'Kesalahan:'
+                        )
+                    else:
+                        output = 'Format tidak sesuai. Pastikan Anda menuliskan sesuai format.'
+
+                        if len(errors) > 0:
+                            output += '\n\nKesalahan:'
 
                             errors = list(set(errors))
 
                             for error in errors:
                                 output += '\n%s' % errors_text[error]
 
-                            line_bot_api.reply_message(
-                                event.reply_token,
-                                TextSendMessage(output)
-                            )
-                    else:
                         line_bot_api.reply_message(
                             event.reply_token,
-                            TextSendMessage('Format tidak sesuai.')
+                            TextSendMessage(output)
                         )
                 return
 
