@@ -113,7 +113,7 @@ def handle_message(event):
 
     participant = cache.get('user_profiles.' + participant_identity)
 
-    if not participant:
+    if not participant or text == '/join':
         try:
             line_profile = line_bot_api.get_profile(participant_identity)
             participant = {
