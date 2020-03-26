@@ -264,12 +264,12 @@ def handle_message(event):
             cache.set(cache_prefix + '.participants', json.dumps(participants), None)
             show_participants(event, participants)
         elif text == '/klasemen':
-            output = 'Klasemen\n\n'
+            output = 'Klasemen\n'
             if len(standings) == 0:
-                output += 'Klasemen masih kosong.'
+                output += '\nKlasemen masih kosong.'
             else:
                 for index, _participant in enumerate(standings):
-                    output += '%s. %s (%s poin)\n' % (index + 1, _participant['name'], _participant['points'])
+                    output += '\n%s. %s (%s poin)' % (index + 1, _participant['name'], _participant['points'])
 
             line_bot_api.reply_message(
                 event.reply_token,
@@ -318,7 +318,7 @@ def handle_message(event):
                     '- Total skor harus 100',
                     '- Panjang pertanyaan minimal 20 dan maksimal 100 karakter',
                     '- Panjang jawaban minimal 3 dan maksimal 25 karakter',
-                    '- Jumlah jawaban maksimal 10',
+                    '- Jumlah jawaban minimal 1 dan maksimal 10',
                     '- Pertanyaan tidak boleh mengandung karakter %s' % "';'",
                     '- Jawaban tidak boleh mengandung karakter %s, %s, %s, %s' % ("';'", "','", "'('", "')'")
                 ]
@@ -385,47 +385,51 @@ def handle_message(event):
                                 errors.append(1)
                                 format_correct = False
                         except:
+                            errors.append(3)
                             errors.append(4)
                             errors.append(5)
                             format_correct = False
 
-                    _player = Player.objects.filter(key=game_id).first()
+                        _player = Player.objects.filter(key=game_id).first()
 
-                    if not _player:
-                        line_bot_api.reply_message(
-                            event.reply_token,
-                            TextSendMessage('ID Permainan tidak ditemukan.')
-                        )
-                    elif format_correct:
-                        Question.objects.create(
-                            value=question,
-                            answers=answers,
-                            creator_id=player['id'],
-                            for_player=_player
-                        )
-
-                        # Tambahkan pertanyaan ke DB
-                        line_bot_api.reply_message(
-                            event.reply_token,
-                            TextSendMessage(
-                                'Anda berhasil menambahkan pertanyaan ke dalam ' +
-                                'Permainan dengan ID %s' % player_identity
+                        if not _player:
+                            line_bot_api.reply_message(
+                                event.reply_token,
+                                TextSendMessage('ID Permainan tidak ditemukan.')
                             )
-                        )
+                        elif format_correct:
+                            Question.objects.create(
+                                value=question,
+                                answers=answers,
+                                creator_id=player['id'],
+                                for_player=_player
+                            )
+
+                            line_bot_api.reply_message(
+                                event.reply_token,
+                                TextSendMessage(
+                                    'Anda berhasil menambahkan pertanyaan ke dalam ' +
+                                    'Permainan dengan ID %s' % game_id
+                                )
+                            )
+                        else:
+                            output = 'Format tidak sesuai. Pastikan Anda menuliskan sesuai format.\n\n'\
+                                'Kesalahan:'
+
+                            errors = list(set(errors))
+
+                            for error in errors:
+                                output += '\n%s' % errors_text[error]
+
+                            line_bot_api.reply_message(
+                                event.reply_token,
+                                TextSendMessage(output)
+                            )
                     else:
-                        output = 'Format tidak sesuai. Pastikan format sesuai.\n\n'\
-                            'Kesalahan:'
-
-                        errors = list(set(errors))
-
-                        for error in errors:
-                            output += '\n%s' % errors_text[error]
-
                         line_bot_api.reply_message(
                             event.reply_token,
-                            TextSendMessage(output)
+                            TextSendMessage('Format tidak sesuai.')
                         )
-
                 return
 
             line_bot_api.reply_message(
@@ -629,9 +633,9 @@ def get_next_question(event, player_id, retry=False):
     used_questions.append(question.id)
     cache.set(cache_prefix + '.used_questions', json.dumps(used_questions), None)
 
-    output = question.value + '\n\n'
+    output = question.value + '\n'
     for index, answer in enumerate(question.answers):
-        output += '%s. ____________\n' % (index + 1)
+        output += '\n%s. ____________' % (index + 1)
 
     return TextSendMessage('Pertanyaan ke %s dari %s.\n\n%s' % (last_question+1, max_question, output))
 
