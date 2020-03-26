@@ -368,7 +368,7 @@ def handle_message(event):
                             result = re.search(r'.* \(([^)]+)\)$', answer)
                             ans = pydash.replace_end(answer, ' (%s)' % result[1], '')
 
-                            if len(answer) < 3 or len(answer) > 25:
+                            if len(ans) < 3 or len(ans) > 25:
                                 errors.append(2)
                                 format_correct = False
 
