@@ -315,7 +315,7 @@ def handle_message(event):
                     return
 
                 errors_text = [
-                    '- Total skor harus 100',
+                    '- Skor harus lebih dari 0 dan Total skor harus 100',
                     '- Panjang pertanyaan minimal 20 dan maksimal 100 karakter',
                     '- Panjang jawaban minimal 3 dan maksimal 25 karakter',
                     '- Jumlah jawaban minimal 1 dan maksimal 10',
@@ -377,6 +377,10 @@ def handle_message(event):
                                 format_correct = False
 
                             score = int(result[1])
+
+                            if score < 1:
+                                errors.append(1)
+                                format_correct = False
 
                             answers[index] = [ans, score]
                             total += score
