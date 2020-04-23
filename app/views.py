@@ -614,6 +614,9 @@ def get_next_question(event, player_id, retry=False):
     last_question = int(cache.get(cache_prefix + '.last_question', 0))
     used_questions = json.loads(cache.get(cache_prefix + '.used_questions', '[]'))
 
+    if last_question >= max_question:
+        return
+
     qs = Question.objects.exclude(pk__in=used_questions)
 
     question = qs.filter(Q(for_player=None) | Q(for_player_id=player_id)).order_by('?').first()
