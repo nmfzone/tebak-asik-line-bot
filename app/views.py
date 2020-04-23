@@ -478,7 +478,7 @@ def handle_message(event):
                     score = 0
 
                     for index, answer in enumerate(answers):
-                        if answer[0].lower() == text:
+                        if answer[0].lower() == text.lower():
                             correct_answer = True
                             answer_id = index
                             score = answer[1]
