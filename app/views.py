@@ -259,7 +259,8 @@ def handle_message(event):
 
             participants.append({
                 'id': participant['user_id'],
-                'name': participant['display_name']
+                'name': participant['display_name'],
+                'total_score': 0
             })
             cache.set(cache_prefix + '.participants', json.dumps(participants), None)
             show_participants(event, participants)
@@ -530,7 +531,7 @@ def handle_message(event):
                 not remaining_time
             ):
                 for _participant in participants:
-                    total_score = 0
+                    total_score = _participant['total_score']
                     for cs in current_standings:
                         if cs['id'] == _participant['id']:
                             total_score += cs['score']
