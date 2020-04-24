@@ -90,7 +90,6 @@ def handle_message(event):
     remaining_time = cache.get(cache_prefix + '.remaining_time', False)
     participants = json.loads(cache.get(cache_prefix + '.participants', '[]'))
     current_question = json.loads(cache.get(cache_prefix + '.current_question', '{}'))
-    current_standings = json.loads(cache.get(cache_prefix + '.current_standings', '[]'))
     standings = json.loads(cache.get(cache_prefix + '.standings', '[]'))
     player = cache.get(cache_prefix + '.player', False)
 
@@ -471,6 +470,7 @@ def handle_message(event):
             return
         else:
             answers = current_question['answers']
+            current_standings = json.loads(cache.get(cache_prefix + '.current_standings', '[]'))
 
             if text != '/skip':
                 if remaining_time:
@@ -486,6 +486,12 @@ def handle_message(event):
                             break
 
                     if correct_answer:
+                        idx = pydash.find_index(current_standings, lambda s: s['answer_id'] == answer_id)
+
+                        # Check whether the answer already used or not
+                        if idx != -1:
+                            return
+
                         current_standings.append({
                             'id': participant['user_id'],
                             'name': participant['display_name'],
@@ -526,8 +532,7 @@ def handle_message(event):
 
             if (
                 text == '/skip' or
-                len(current_standings) == len(answers) or
-                (last_question + 1) == max_question or
+                len(current_standings) >= len(answers) or
                 not remaining_time
             ):
                 for _participant in participants:
@@ -551,6 +556,8 @@ def handle_message(event):
                 if question:
                     line_messanges.append(question)
                 else:
+                    # No more question
+
                     line_messanges.append(TextSendMessage('Pertandingan berakhir!'))
                     if participants[0]['total_score'] == 0:
                         output = 'Pemenang\n\nTidak ada pemenang.'
@@ -614,6 +621,7 @@ def get_next_question(event, player_id, retry=False):
     cache_prefix = get_cache_prefix(event)
     last_question = int(cache.get(cache_prefix + '.last_question', 0))
     used_questions = json.loads(cache.get(cache_prefix + '.used_questions', '[]'))
+    cache.set(cache_prefix + '.current_standings', json.dumps([]), None)
 
     if last_question >= max_question:
         return
@@ -645,8 +653,6 @@ def get_next_question(event, player_id, retry=False):
         'text': question.value,
         'answers': question.answers
     }), None)
-
-    cache.set(cache_prefix + '.current_standings', json.dumps([]), None)
 
     used_questions.append(question.id)
     cache.set(cache_prefix + '.used_questions', json.dumps(used_questions), None)
